@@ -1,0 +1,9 @@
+[package]
+name = "rekordbox_db"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rekordcrate = "0.2.1"
+binrw = "0.13"
+rusqlite = {version = "0.32.1", features = ["bundled-sqlcipher"]}
