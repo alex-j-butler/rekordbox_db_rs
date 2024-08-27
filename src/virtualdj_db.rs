@@ -14,29 +14,36 @@ pub struct VirtualDJDatabase {
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Song {
     #[serde(rename = "@FilePath")]
-    FilePath: String,
+    file_path: String,
     #[serde(rename = "@FileSize")]
-    FileSize: usize,
+    file_size: usize,
 
-    Tags: Tags,
-    Infos: Infos,
-    Scan: Scan,
-    Poi: Poi,
+    #[serde(rename = "Tags")]
+    tags: Tags,
+
+    #[serde(rename = "Infos")]
+    infos: Infos,
+
+    #[serde(rename = "Scan")]
+    scan: Scan,
+
+    #[serde(rename = "Poi")]
+    poi: Poi,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Tags {
     // Author="Joy Orbison" Title="Flight Fm" Genre="Electro" Year="2024" Flag="1"
     #[serde(rename = "@Title")]
-    Title: String,
+    title: String,
     #[serde(rename = "@Genre")]
-    Genre: String,
+    genre: String,
     #[serde(rename = "@Year")]
-    Year: String,
+    year: String,
     #[serde(rename = "@Flag")]
-    Flag: i32,
+    flag: i32,
     #[serde(rename = "@Author")]
-    Author: String,
+    author: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
@@ -44,94 +51,94 @@ pub struct Infos {
     // SongLength="247.820975" LastModified="1724026202" FirstSeen="1723009108" FirstPlay="1723009857"
     // LastPlay="1724026202" PlayCount="5" Bitrate="1071" Cover="1"
     #[serde(rename = "@SongLength")]
-    SongLength: f32,
+    song_length: f32,
 
     #[serde(rename = "@LastModified")]
-    LastModified: i32,
+    last_modified: i32,
 
     #[serde(rename = "@FirstSeen")]
-    FirstSeen: i32,
+    first_seen: i32,
 
     #[serde(rename = "@FirstPlay")]
-    FirstPlay: i32,
+    first_play: i32,
 
     #[serde(rename = "@LastPlay")]
-    LastPlay: i32,
+    last_play: i32,
 
     #[serde(rename = "@PlayCount")]
-    PlayCount: i32,
+    play_count: i32,
 
     #[serde(rename = "@Bitrate")]
-    Bitrate: i32,
+    bitrate: i32,
 
     #[serde(rename = "@Cover")]
-    Cover: i32,
+    cover: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Scan {
     // Version="801" Bpm="0.428571" AltBpm="0.321429" Volume="1.009624" Key="D" Flag="32768"
     #[serde(rename = "@Version")]
-    Version: i32,
+    version: i32,
 
     #[serde(rename = "@Bpm")]
-    Bpm: f32,
+    bpm: f32,
 
     #[serde(rename = "@AltBpm")]
-    AltBpm: f32,
+    alt_bpm: f32,
 
     #[serde(rename = "@Volume")]
-    Volume: f32,
+    volume: f32,
 
     #[serde(rename = "@Key")]
-    Key: String,
+    key: String,
 
     #[serde(rename = "@Flag")]
-    Flag: i32,
+    flag: i32,
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Poi {
     // <Poi Pos="0.547" Type="beatgrid" />
     #[serde(rename = "@Pos")]
-    Pos: f32,
+    pos: f32,
 
     #[serde(rename = "@Type")]
-    Type: String,
+    poi_type: String,
 }
 
 pub fn get_virtualdj_db() -> Result<String, quick_xml::DeError> {
     let database = VirtualDJDatabase {
         version: "2024".to_string(),
         songs: vec![Song {
-            FilePath: "test.mp3".to_string(),
-            FileSize: 1000,
-            Tags: Tags {
-                Title: "Test Title".to_string(),
-                Genre: "".to_string(),
-                Year: "".to_string(),
-                Flag: 1,
-                Author: "".to_string(),
+            file_path: "test.mp3".to_string(),
+            file_size: 1000,
+            tags: Tags {
+                title: "Test Title".to_string(),
+                genre: "".to_string(),
+                year: "".to_string(),
+                flag: 1,
+                author: "".to_string(),
             },
-            Infos: Infos {
-                SongLength: 250.0,
-                LastModified: 1,
-                FirstSeen: 1,
-                FirstPlay: 1,
-                LastPlay: 1,
-                PlayCount: 1,
-                Bitrate: 1000,
-                Cover: 1,
+            infos: Infos {
+                song_length: 250.0,
+                last_modified: 1,
+                first_seen: 1,
+                first_play: 1,
+                last_play: 1,
+                play_count: 1,
+                bitrate: 1000,
+                cover: 1,
             },
-            Scan: Scan {
-                Version: 801,
-                Bpm: 0.320,
-                AltBpm: 0.320,
-                Volume: 1.0,
-                Key: "A".to_string(),
-                Flag: 32768,
+            scan: Scan {
+                version: 801,
+                bpm: 0.320,
+                alt_bpm: 0.320,
+                volume: 1.0,
+                key: "A".to_string(),
+                flag: 32768,
             },
-            Poi: Poi { Pos: 0.547, Type: "beatgrid".to_string() },
+            poi: Poi { pos: 0.547, poi_type: "beatgrid".to_string() },
         }],
     };
 
@@ -142,34 +149,34 @@ pub fn get_virtualdj_db() -> Result<String, quick_xml::DeError> {
 pub fn get_virtualdj_db_from_rb(rekordbox: &mut RekordboxDb) -> Result<String, quick_xml::DeError> {
     let s = rekordbox.songs.iter().map(|x|
         Song {
-            FilePath: x.1.file_path.clone(),
-            FileSize: x.1.file_size,
-            Tags: Tags {
-                Title: x.1.title.clone(),
-                Genre: "".to_string(),
-                Year: "".to_string(),
-                Flag: 1,
-                Author: "".to_string(),
+            file_path: x.1.file_path.clone(),
+            file_size: x.1.file_size,
+            tags: Tags {
+                title: x.1.title.clone(),
+                genre: "".to_string(),
+                year: "".to_string(),
+                flag: 1,
+                author: "".to_string(),
             },
-            Infos: Infos {
-                SongLength: x.1.length as f32,
-                LastModified: 1,
-                FirstSeen: 1,
-                FirstPlay: 1,
-                LastPlay: 1,
-                PlayCount: 1,
-                Bitrate: 1000,
-                Cover: 1,
+            infos: Infos {
+                song_length: x.1.length as f32,
+                last_modified: 1,
+                first_seen: 1,
+                first_play: 1,
+                last_play: 1,
+                play_count: 1,
+                bitrate: 1000,
+                cover: 1,
             },
-            Scan: Scan {
-                Version: 801,
-                Bpm: calc_virtualdj_bpm(x.1.bpm),
-                AltBpm: calc_virtualdj_bpm(x.1.bpm),
-                Volume: 1.0,
-                Key: "A".to_string(),
-                Flag: 32768,
+            scan: Scan {
+                version: 801,
+                bpm: calc_virtualdj_bpm(x.1.bpm),
+                alt_bpm: calc_virtualdj_bpm(x.1.bpm),
+                volume: 1.0,
+                key: "A".to_string(),
+                flag: 32768,
             },
-            Poi: Poi { Pos: calc_virtualdj_firstbeat(x.1.first_beat), Type: "beatgrid".to_string() },
+            poi: Poi { pos: calc_virtualdj_firstbeat(x.1.first_beat), poi_type: "beatgrid".to_string() },
         }
     ).collect::<Vec<_>>();
     
