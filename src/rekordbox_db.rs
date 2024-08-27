@@ -149,8 +149,6 @@ impl RekordboxDb {
 
 fn get_song_analysis(song: &mut RekordboxAnalysis, db_path: PathBuf) -> DbResult<bool> {
 
-    println!("{}", song.title);
-
     // Validate the analysis path has a length.
     // Don't care right now whether it's a valid file.
     let apath = song.analysis_path.clone();
