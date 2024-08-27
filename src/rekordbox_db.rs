@@ -3,7 +3,7 @@ use binrw::BinRead as _;
 use rekordcrate::anlz::ANLZ;
 use rusqlite::{Connection, OpenFlags};
 
-use std::{collections::HashMap, env::VarError, error::{self, Error}, path::PathBuf};
+use std::{collections::HashMap, env::VarError, error::{self, Error}, path::{Path, PathBuf}};
 
 type DbResult<T> = std::result::Result<T, RekordboxDbError>;
 type Result<T> = std::result::Result<T, RekordboxError>;
@@ -74,19 +74,20 @@ impl RekordboxDb {
         let appdata = std::env::var("APPDATA")?;
         let mut db_path = std::path::PathBuf::new();
         db_path.push(appdata);
-        db_path.push("Pioneer/rekordbox/master.db");
+        db_path.push("Pioneer/rekordbox");
 
-        let path = db_path.to_str().ok_or(
-            RekordboxDbError::Path
-        )?;
-        Self::new(path)
+        Self::new(db_path)
     }
 
-    pub fn new(path: &str) -> DbResult<Self> {
+    /***
+     * Parses a rekordbox database in the directory provided.
+     * Expects a master.db file in the directory.
+     */
+    pub fn new(path: PathBuf) -> DbResult<Self> {
         let mut songs_map:HashMap<String, RekordboxAnalysis> = HashMap::new();
 
         let conn_result = 
-            Connection::open_with_flags(path, OpenFlags::SQLITE_OPEN_READ_ONLY);
+            Connection::open_with_flags(path.join("master.db"), OpenFlags::SQLITE_OPEN_READ_ONLY);
         let conn = match conn_result {
             Ok(conn) => conn,
             Err(error) => panic!("Rekordbox DB error: {error:?}")
@@ -95,7 +96,7 @@ impl RekordboxDb {
         conn.pragma_update(None, "key", "402fd482c38817c35ffa8ffb8c7d93143b749e7d315df7a81732a1ff43608497").unwrap();
         
         let mut stmt: rusqlite::Statement = conn.prepare(
-            "SELECT djmdContent.ID, djmdContent.AnalysisDataPath, djmdContent.FolderPath, djmdContent.FileNameL, djmdContent.FileSize, djmdContent.Title, IFNULL(djmdArtist.Name, \"\") AS ArtistName, `Length` FROM djmdContent LEFT JOIN djmdArtist ON djmdContent.ArtistID == djmdArtist.ID;").unwrap();
+            "SELECT djmdContent.ID, djmdContent.AnalysisDataPath, djmdContent.FolderPath, djmdContent.FileNameL, djmdContent.FileSize, djmdContent.Title, IFNULL(djmdArtist.Name, \"\") AS ArtistName, `Length` FROM djmdContent LEFT JOIN djmdArtist ON djmdContent.ArtistID == djmdArtist.ID ORDER BY djmdContent.ID;").unwrap();
         let rows_result = stmt.query_map([], |row| {
             Ok(RekordboxAnalysis {
                 id: row.get(0)?,
@@ -116,16 +117,13 @@ impl RekordboxDb {
             Err(error) => panic!("Rekordbox DB select error: {error:?}")
         };
 
-        let appdata = std::env::var("APPDATA")?;
-        let mut db_path = std::path::PathBuf::new();
-        db_path.push(appdata);
-        db_path.push("Pioneer/rekordbox/share");
+        let analysed_path = path.join("share");
 
         for song in rows {
             let mut s = song.unwrap();
 
             // Retrieve the song analysis.
-            let _ = get_song_analysis(&mut s, db_path.clone());
+            let _ = get_song_analysis(&mut s, analysed_path.clone());
             
             songs_map.insert(s.id.clone(), s);
         }
@@ -150,6 +148,8 @@ impl RekordboxDb {
 }
 
 fn get_song_analysis(song: &mut RekordboxAnalysis, db_path: PathBuf) -> DbResult<bool> {
+
+    println!("{}", song.title);
 
     // Validate the analysis path has a length.
     // Don't care right now whether it's a valid file.
@@ -195,7 +195,6 @@ fn get_song_analysis(song: &mut RekordboxAnalysis, db_path: PathBuf) -> DbResult
                 }
 
                 let first_beat = beat.unwrap();
-                println!("{}", first_beat.beat_number);
 
                 song.bpm = first_beat.tempo as f32 / 100.0;
                 song.first_beat = first_beat.time as f32;
