@@ -3,7 +3,7 @@ use binrw::BinRead as _;
 use rekordcrate::anlz::ANLZ;
 use rusqlite::{Connection, OpenFlags};
 
-use std::{collections::HashMap, env::VarError, error::{self, Error}, path::{PathBuf}};
+use std::{collections::HashMap, env::VarError, error::{self, Error}, path::PathBuf};
 
 type DbResult<T> = std::result::Result<T, RekordboxDbError>;
 type Result<T> = std::result::Result<T, RekordboxError>;
@@ -124,11 +124,9 @@ impl RekordboxDb {
         for song in rows {
             let mut s = song.unwrap();
 
-            // Get the analysis file:
-            
+            // Retrieve the song analysis.
             let _ = get_song_analysis(&mut s, db_path.clone());
-
-            // println!("ID: {}, Title: {}", s.id, s.title);
+            
             songs_map.insert(s.id.clone(), s);
         }
 
@@ -152,16 +150,25 @@ impl RekordboxDb {
 }
 
 fn get_song_analysis(song: &mut RekordboxAnalysis, db_path: PathBuf) -> DbResult<bool> {
+
+    // Validate the analysis path has a length.
+    // Don't care right now whether it's a valid file.
     let apath = song.analysis_path.clone();
     if apath.len() == 0 {
         return Ok(false)
     }
 
+    // Split off the initial slash off the analysis path.
+    // eg "/PIONEER/USBANLZ/469/5698f-5b09-403a-b46e-e62c9eccc420/ANLZ0000.DAT"
+    // to "PIONEER/USBANLZ/469/5698f-5b09-403a-b46e-e62c9eccc420/ANLZ0000.DAT"
     let analysis_path = db_path.join(apath.split_at(1).1);
+
+    // Read the file and load it in the ANLZ struct.
     let mut reader = std::fs::File::open(analysis_path)?;
     let anlz: ANLZ = ANLZ::read(&mut reader)?;
     
 
+    // Find the beat grid section.
     let mut beat_grid_section = None;
     for section in anlz.sections {
         if section.header.kind == rekordcrate::anlz::ContentKind::BeatGrid {
@@ -170,10 +177,15 @@ fn get_song_analysis(song: &mut RekordboxAnalysis, db_path: PathBuf) -> DbResult
     }
 
     if let Some(bg) = beat_grid_section {
+        // Change the section struct into a beatgrid struct.
+        // This should always be true as we check the type prior to this.
         if let rekordcrate::anlz::Content::BeatGrid(beat_grid) = bg.content {
             if beat_grid.beats.len() > 1 {
+
+                // Find beat number 1
+                // Some tracks have multiple beats before the first bar.
                 let mut beat = None;
-                for n in 0..(std::cmp::min(10, beat_grid.beats.len())) {
+                for n in 0..(std::cmp::min(4, beat_grid.beats.len())) {
                     let first_beat = beat_grid.beats.get(n).unwrap();
 
                     if first_beat.beat_number == 1 {
@@ -201,15 +213,9 @@ pub struct RekordboxDb {
     pub songs: HashMap<String, RekordboxAnalysis>,
 }
 
-#[derive(Clone)]
-pub struct RekordboxSong {
-    pub id: String,
-    pub folder_path: String,
-    pub file_name: String,
-    pub title: String,
-    pub analysis_path: String,
-}
-
+/**
+ * Rekordbox analysis struct - stores the consolidated data from the Rekordbox SQLite DB and the Rekordbox analysis files.
+*/
 #[derive(Clone)]
 pub struct RekordboxAnalysis {
     pub id: String,
