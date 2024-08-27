@@ -1,8 +1,12 @@
 pub mod rekordbox_db;
+pub mod virtualdj_db;
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use rekordbox_db::RekordboxDb;
+    use virtualdj_db::{calc_virtualdj_bpm, get_virtualdj_db_from_rb};
 
     use super::*;
 
@@ -22,5 +26,20 @@ mod tests {
         assert_eq!(song.artist, "Diplo & SIDEPIECE");
         assert_eq!(song.bpm, 123.0);
         assert_eq!(song.first_beat, 578.0);
+    }
+
+    #[test]
+    fn test_virtualdj_save() {
+        let mut db = RekordboxDb::new_with_default_path().unwrap();
+        let db = get_virtualdj_db_from_rb(&mut db).unwrap();
+
+        fs::write("./database.xml", db.clone()).expect("Unable to write file");
+
+        assert_eq!(db, "");
+    }
+
+    #[test]
+    fn test_bpm_calc() {
+        assert_eq!(calc_virtualdj_bpm(140.0), 0.42857143);
     }
 }
