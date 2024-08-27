@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 rekordcrate = "0.2.1"
-binrw = "0.13"
+binrw = "0.14"
 rusqlite = {version = "0.32.1", features = ["bundled-sqlcipher"]}
 quick-xml = { version = "0.36.0", features = ["serialize"] }
 serde = {version = "1.0.209", features = ["derive"]}
