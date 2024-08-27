@@ -12,8 +12,8 @@ mod tests {
 
     #[test]
     fn test_rekordbox_db() {
-        let db = RekordboxDb::new_with_default_path();
-        db.unwrap();
+        let current_dir: PathBuf = std::env::current_dir().unwrap().join("tests/demo_db");
+        let db = RekordboxDb::new(current_dir).unwrap();
     }
 
     #[test]
